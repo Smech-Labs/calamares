@@ -1,67 +1,84 @@
-<!-- SPDX-FileCopyrightText: no
+<!-- SPDX-FileCopyrightText: 2026 Smech Labs
      SPDX-License-Identifier: CC0-1.0
 -->
 
-# Calamares: Distribution-Independent Installer Framework
----------
+# Smech Labs' Calamares fork
 
-[![Current issue](https://img.shields.io/badge/issue-in_progress-FE9B48)](https://github.com/calamares/calamares/labels/hacking%3A%20in-progress)
-[![GitHub release](https://img.shields.io/github/release/calamares/calamares.svg)](https://github.com/calamares/calamares/releases)
-[![GitHub Build Status](https://img.shields.io/github/actions/workflow/status/calamares/calamares/push.yml)](https://github.com/calamares/calamares/actions?query=workflow%3Aci)
-[![GitHub license](https://img.shields.io/badge/license-Multiple-green)](https://github.com/calamares/calamares/tree/calamares/LICENSES)
+This is a Smech Labs fork of [Calamares](https://github.com/calamares/calamares),
+the distribution-independent system installer, tracked on its own
+`smechos-main` branch. It exists for one concrete reason: SmechOS's
+build pipeline (`spk-compile.py`'s `phase_calamares`, in
+[`Smech-Labs/SmechDeploy`](https://github.com/Smech-Labs/SmechDeploy))
+points `CALAMARES_GIT_URL` at **this** repository, not upstream's,
+so SmechOS's graphical installer is built from a source Smech Labs
+actually controls — reproducible builds, and a real place to carry a
+patch if upstream ever needs one, instead of vendoring a tarball or
+hoping upstream's `calamares` branch never moves under us mid-build.
 
+## Current state: an unmodified mirror, by design
 
-| [Report a Bug](https://github.com/calamares/calamares/issues/new) | [Translate](https://app.transifex.com/calamares/calamares/) | [Contribute](CONTRIBUTING.md) | [Chat on Matrix: #calamares:kde.org](https://webchat.kde.org/#/room/%23calamares:kde.org) | [Wiki](https://github.com/calamares/calamares/wiki) |
-|:--:|:--:|:--:|:--:|:--:|
+As of this writing there are **no Smech Labs patches to the Calamares
+source tree itself** — this branch is a clean mirror of upstream's
+`calamares` branch. That's intentional, not an oversight: Calamares'
+own design goal, stated in its own docs, is that distributions
+shouldn't need "cumbersome patching" to customize it — branding
+components and external modules are supposed to be enough. SmechOS
+takes that at face value and keeps actual customization *outside*
+this repository:
 
+- A `smechos` branding component (`usr/share/calamares/branding/smechos`)
+  and `/etc/calamares/modules-search` config are generated at build
+  time by `phase_calamares`, written directly into the target rootfs —
+  never committed here.
+- The live-session integration (an autostart entry that only launches
+  `calamares` when `calamares=1` is on the kernel command line) is
+  also assembled by the build script, not part of this source tree.
 
-> Calamares is a distribution-independent system installer, with an advanced partitioning
-> feature for both manual and automated partitioning operations. Calamares is designed to
-> be customizable by distribution maintainers without the need for cumbersome patching,
-> thanks to third-party branding and external modules support.
+If SmechOS ever genuinely needs a real patch to Calamares' own code
+(not just branding/config), it lands here, on `smechos-main`, as a
+real commit on top of upstream — that's the whole point of this fork
+existing as a repo rather than a pinned tarball.
 
-## Target Audience
+## Staying in sync with upstream
 
-Calamares is a Linux installer; users who install Linux on a computer will hopefully
-use it just **once**, to install their Linux distribution. Calamares is not
-a "ready to use" application: distributions apply a huge amount of customization
-and configuration to Calamares, and the target audience for this repository
-is those distributions, and the people who make those Linux distros.
+An `upstream` remote (`https://github.com/calamares/calamares.git`,
+default branch `calamares`) is already configured alongside `origin`.
+To pull in a new upstream release:
 
-Calamares has some [generic user documentation](https://calamares.io/docs/users-guide/)
-for end-users, but most of what we have is for distro developers.
-
-## Getting Calamares
-
-Clone Calamares from GitHub. The default branch is called *calamares*.
-
+```sh
+git fetch upstream
+git merge upstream/calamares   # or rebase, if smechos-main ever carries real patches
+git push origin smechos-main
 ```
-git clone https://github.com/calamares/calamares.git
-```
 
-Calamares is a KDE-Frameworks and Qt-based, C++17, CMake-built application.
-The dependencies are explained in [CONTRIBUTING.md](CONTRIBUTING.md).
+`spk-compile.py` pins `CALAMARES_VER` separately from whatever's
+checked out here, so bumping this branch and bumping the version
+SmechOS actually builds against are two separate, deliberate steps —
+check `SmechDeploy/spk-compile.py` before assuming a sync here alone
+changes what ships.
 
-## Contributing to Calamares
+## Building it
 
-Calamares welcomes PRs. New issues are welcome, too.
-There are both the Calamares **core** repository (this one)
-and an **extensions** repository ([Calamares extensions](https://github.com/calamares/calamares-extensions)).
+Nothing about the actual build has diverged from upstream Calamares:
+it's still a KDE-Frameworks/Qt-based, CMake-built application. See
+upstream's [`CONTRIBUTING.md`](CONTRIBUTING.md) in this same tree for
+dependencies and build instructions — that content hasn't been
+rewritten, since it's still accurate here.
 
-Contributions to code, modules, documentation, the wiki, and the website are all welcome.
-There is more information in the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+## The long-term plan: this fork is transitional
 
-## Join the Conversation
+SmechOS's own installer roadmap is to eventually replace Calamares
+entirely with **[SmechInstall](https://github.com/Smech-Labs/smech-install)**,
+a ground-up Qt6/QML + GTK4/libadwaita dual-frontend installer — Calamares'
+single Qt-based UI doesn't feel native once SmechOS supports more than
+one desktop environment, which is the whole reason SmechInstall exists.
+Until SmechInstall reaches parity, this fork stays SmechOS's real,
+current installer source, not a placeholder.
 
-GitHub Issues are **one** place for discussing Calamares if there are concrete
-problems or a new feature to discuss.
-Issues are not a help channel.
-Visit Matrix for help with configuration or compilation.
+## License
 
-Regular Calamares development chit-chat happens in a [Matrix](https://matrix.org/)
-room, `#calamares:kde.org`. Responsiveness is best during the day
-in Europe, but feel free to idle.
-Matrix is persistent, and we'll see your message eventually.
-
-* [![Join us on Matrix](https://img.shields.io/badge/Matrix-%23calamares:kde.org-blue)](https://webchat.kde.org/#/room/%23calamares:kde.org) (needs a Matrix account)
-
+Calamares ships multiple licenses depending on the file (GPL-3.0-or-later,
+LGPL-2.1/3.0, MIT, BSD-2-Clause, CC0-1.0 for docs like this one) — see
+[`LICENSES/`](LICENSES/) and [`.reuse/dep5`](.reuse/dep5) for the
+authoritative per-file breakdown. Nothing about licensing changes in
+this fork.
